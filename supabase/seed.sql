@@ -12,7 +12,6 @@ INSERT INTO usuarios (empresa_id, email, nome, cargo, tipo, senha_hash, ativo) V
 ((SELECT id FROM empresas WHERE nome = 'SalesPro'), 'admin@salespro.com', 'Administrador SalesPro', 'Diretor', 'gestor', 'hash_senha_123456', true),
 ((SELECT id FROM empresas WHERE nome = 'SalesPro'), 'pedro@salespro.com', 'Pedro Costa', 'Vendedor', 'funcionario', 'hash_senha_123456', true),
 ((SELECT id FROM empresas WHERE nome = 'SalesPro'), 'ana@salespro.com', 'Ana Oliveira', 'Vendedora', 'funcionario', 'hash_senha_123456', true),
-
 -- InnovateLab
 ((SELECT id FROM empresas WHERE nome = 'InnovateLab'), 'admin@innovatelab.com', 'Administrador InnovateLab', 'Fundador', 'gestor', 'hash_senha_123456', true),
 ((SELECT id FROM empresas WHERE nome = 'InnovateLab'), 'carlos@innovatelab.com', 'Carlos Lima', 'Vendedor', 'funcionario', 'hash_senha_123456', true),
