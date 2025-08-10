@@ -46,22 +46,21 @@ export default function LoginPage() {
 
       console.log('Resultado da busca:', { usuarios, userError })
 
-      if (userError || !usuarios) {
-        console.log('Erro na busca do usuário:', userError)
+      if (userError || !usuarios || usuarios.length === 0) {
+        console.log('Erro na busca do usuário:', userError || 'Usuário não encontrado')
         setError('Email ou senha incorretos')
         return
       }
 
-      // Aqui você implementaria a verificação de senha
-      // Por enquanto, vamos simular um login bem-sucedido
-      // Em produção, você deve usar bcrypt ou similar para verificar a senha
+      // A função RPC retorna um array, então pegamos o primeiro elemento
+      const usuarioEncontrado = usuarios[0]
       
       // Verificar senha (comparando com senha_hash)
-      console.log('Verificando senha:', { senha_digitada: senha, senha_hash: usuarios.senha_hash })
+      console.log('Verificando senha:', { senha_digitada: senha, senha_hash: usuarioEncontrado.senha_hash })
       
-      if (senha === usuarios.senha_hash) { // Para teste, comparando diretamente
+      if (senha === usuarioEncontrado.senha_hash) { // Para teste, comparando diretamente
         console.log('Login bem-sucedido!')
-        setUsuarioLogado(usuarios)
+        setUsuarioLogado(usuarioEncontrado)
         router.push('/dashboard')
       } else {
         console.log('Senha incorreta!')
