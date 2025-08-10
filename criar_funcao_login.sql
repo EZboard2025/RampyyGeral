@@ -1,6 +1,9 @@
 -- Criar função RPC para buscar usuário durante login
 -- Execute este SQL no Supabase
 
+-- Primeiro, deletar a função antiga (se existir)
+DROP FUNCTION IF EXISTS buscar_usuario_login(TEXT, UUID);
+
 -- Função para buscar usuário durante login (bypass RLS)
 CREATE OR REPLACE FUNCTION buscar_usuario_login(
   p_email TEXT,
@@ -9,11 +12,11 @@ CREATE OR REPLACE FUNCTION buscar_usuario_login(
 RETURNS TABLE (
   id UUID,
   empresa_id UUID,
-  email TEXT,
-  nome TEXT,
-  cargo TEXT,
-  tipo TEXT,
-  senha_hash TEXT,
+  email VARCHAR(255),
+  nome VARCHAR(255),
+  cargo VARCHAR(255),
+  tipo VARCHAR(50),
+  senha_hash VARCHAR(255),
   ativo BOOLEAN,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ
