@@ -1,30 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Criar o cliente Supabase apenas no lado do cliente
 let supabase: any = null
 
-// Função para criar o cliente Supabase
-function createSupabaseClient() {
+if (typeof window !== 'undefined') {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (supabaseUrl && supabaseAnonKey) {
+    supabase = createClient(supabaseUrl, supabaseAnonKey)
+  } else {
     console.warn('Missing Supabase environment variables')
-    return null
-  }
-
-  return createClient(supabaseUrl, supabaseAnonKey)
-}
-
-// Criar o cliente apenas se as variáveis estiverem disponíveis
-if (typeof window !== 'undefined') {
-  // No lado do cliente
-  supabase = createSupabaseClient()
-} else {
-  // No lado do servidor, criar apenas se as variáveis existirem
-  try {
-    supabase = createSupabaseClient()
-  } catch (error) {
-    console.warn('Supabase client not available on server side')
   }
 }
 
