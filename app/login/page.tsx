@@ -35,6 +35,8 @@ export default function LoginPage() {
       }
 
       // Buscar usuário pelo email e empresa_id
+      console.log('Tentando login com:', { email, empresa_id: empresaSelecionada?.id })
+      
       const { data: usuarios, error: userError } = await supabase
         .from('usuarios')
         .select('*')
@@ -43,7 +45,10 @@ export default function LoginPage() {
         .eq('ativo', true)
         .single()
 
+      console.log('Resultado da busca:', { usuarios, userError })
+
       if (userError || !usuarios) {
+        console.log('Erro na busca do usuário:', userError)
         setError('Email ou senha incorretos')
         return
       }
@@ -53,10 +58,14 @@ export default function LoginPage() {
       // Em produção, você deve usar bcrypt ou similar para verificar a senha
       
       // Verificar senha (comparando com senha_hash)
+      console.log('Verificando senha:', { senha_digitada: senha, senha_hash: usuarios.senha_hash })
+      
       if (senha === usuarios.senha_hash) { // Para teste, comparando diretamente
+        console.log('Login bem-sucedido!')
         setUsuarioLogado(usuarios)
         router.push('/dashboard')
       } else {
+        console.log('Senha incorreta!')
         setError('Email ou senha incorretos')
       }
 
