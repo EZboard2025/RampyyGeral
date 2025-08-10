@@ -28,6 +28,12 @@ export default function LoginPage() {
     setError('')
 
     try {
+      // Verificar se o cliente Supabase está disponível
+      if (!supabase) {
+        setError('Sistema temporariamente indisponível')
+        return
+      }
+
       // Buscar usuário pelo email e empresa_id
       const { data: usuarios, error: userError } = await supabase
         .from('usuarios')

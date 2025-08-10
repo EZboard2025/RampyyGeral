@@ -19,6 +19,13 @@ export default function HomePage() {
 
   const carregarEmpresas = async () => {
     try {
+      // Verificar se o cliente Supabase está disponível
+      if (!supabase) {
+        console.error('Supabase client not available')
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from('empresas')
         .select('*')
