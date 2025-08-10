@@ -37,13 +37,12 @@ export default function LoginPage() {
       // Buscar usuário pelo email e empresa_id
       console.log('Tentando login com:', { email, empresa_id: empresaSelecionada?.id })
       
+      // Usar rpc para bypass do RLS durante login
       const { data: usuarios, error: userError } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .eq('empresa_id', empresaSelecionada?.id)
-        .eq('ativo', true)
-        .single()
+        .rpc('buscar_usuario_login', {
+          p_email: email.toLowerCase(),
+          p_empresa_id: empresaSelecionada?.id
+        })
 
       console.log('Resultado da busca:', { usuarios, userError })
 
