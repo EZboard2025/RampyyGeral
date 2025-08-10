@@ -25,8 +25,9 @@ export interface Usuario {
   empresa_id: string
   email: string
   nome: string
-  cargo: string
+  cargo?: string
   tipo: 'gestor' | 'funcionario'
+  senha_hash: string
   ativo: boolean
   created_at: string
   updated_at: string

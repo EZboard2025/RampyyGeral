@@ -52,8 +52,8 @@ export default function LoginPage() {
       // Por enquanto, vamos simular um login bem-sucedido
       // Em produção, você deve usar bcrypt ou similar para verificar a senha
       
-      // Simular verificação de senha (substitua por verificação real)
-      if (senha === '123456') { // Senha padrão para teste
+      // Verificar senha (comparando com senha_hash)
+      if (senha === usuarios.senha_hash) { // Para teste, comparando diretamente
         setUsuarioLogado(usuarios)
         router.push('/dashboard')
       } else {
@@ -71,6 +71,39 @@ export default function LoginPage() {
   const handleVoltar = () => {
     router.push('/')
   }
+
+  // Função para obter dados de teste baseado na empresa
+  const getTestData = () => {
+    switch (empresaSelecionada?.nome) {
+      case 'Template':
+        return {
+          gestor: 'admin@template.com',
+          funcionario: 'dev@template.com'
+        }
+      case 'TechCorp':
+        return {
+          gestor: 'admin@techcorp.com',
+          funcionario: 'dev@techcorp.com'
+        }
+      case 'SalesPro':
+        return {
+          gestor: 'admin@salespro.com',
+          funcionario: 'rep@salespro.com'
+        }
+      case 'InnovateLab':
+        return {
+          gestor: 'admin@innovatelab.com',
+          funcionario: 'dev@innovatelab.com'
+        }
+      default:
+        return {
+          gestor: 'admin@empresa.com',
+          funcionario: 'dev@empresa.com'
+        }
+    }
+  }
+
+  const testData = getTestData()
 
   if (!empresaSelecionada) {
     return null
@@ -186,9 +219,13 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-500">
-              Dados de teste: admin@empresa.com / 123456
+            <p className="text-sm text-gray-500 mb-2">
+              Dados de teste:
             </p>
+            <div className="space-y-1 text-xs text-gray-600">
+              <p><strong>Gestor:</strong> {testData.gestor} / 123456</p>
+              <p><strong>Funcionário:</strong> {testData.funcionario} / 123456</p>
+            </div>
           </div>
         </form>
 
