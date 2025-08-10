@@ -1,20 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Criar o cliente Supabase apenas no lado do cliente
-let supabase: any = null
+// Configurações do Supabase
+const supabaseUrl = 'https://ghfhnmjzjgvmaqhvzjdv.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdoZmhubWp6amd2bWFxaHZ6amR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NDUxODIsImV4cCI6MjA3MDQyMTE4Mn0.WHB-EwrCSgF5t-WKuK757yDn4WKWfUTISGdqZvziCUM'
 
-if (typeof window !== 'undefined') {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (supabaseUrl && supabaseAnonKey) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey)
-  } else {
-    console.warn('Missing Supabase environment variables')
-  }
-}
-
-export { supabase }
+// Criar o cliente Supabase
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Tipos para as tabelas
 export interface Empresa {
