@@ -46,8 +46,6 @@ export default function ConfiguracoesPage() {
   const [openaiApiKey, setOpenaiApiKey] = useState('')
   const [elevenlabsApiKey, setElevenlabsApiKey] = useState('')
   const [openaiAgentId, setOpenaiAgentId] = useState('')
-  const [openaiAgentInstructions, setOpenaiAgentInstructions] = useState('')
-  const [openaiModel, setOpenaiModel] = useState('gpt-4-turbo-preview')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   
   const router = useRouter()
@@ -76,8 +74,6 @@ export default function ConfiguracoesPage() {
        setOpenaiApiKey(data.openai_api_key || '')
        setElevenlabsApiKey(data.elevenlabs_api_key || '')
        setOpenaiAgentId(data.openai_agent_id || '')
-       setOpenaiAgentInstructions(data.openai_agent_instructions || '')
-       setOpenaiModel(data.openai_model || 'gpt-4-turbo-preview')
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
       setMessage({ type: 'error', text: 'Erro ao carregar configurações' })
@@ -99,8 +95,6 @@ export default function ConfiguracoesPage() {
            openai_api_key: openaiApiKey || null,
            elevenlabs_api_key: elevenlabsApiKey || null,
            openai_agent_id: openaiAgentId || null,
-           openai_agent_instructions: openaiAgentInstructions || null,
-           openai_model: openaiModel,
            updated_at: new Date().toISOString()
          })
         .eq('id', configuracao.id)
@@ -253,7 +247,7 @@ export default function ConfiguracoesPage() {
                <div className="flex items-center mb-4">
                  <Bot className="h-6 w-6 mr-3 text-purple-500" />
                  <h2 className="text-xl font-semibold text-gray-900">
-                   Configuração OpenAI
+                   Configuração do Assistente de IA
                  </h2>
                </div>
                
@@ -288,58 +282,22 @@ export default function ConfiguracoesPage() {
                    </p>
                  </div>
 
-                 {/* Agent ID */}
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     ID do Agente (Opcional)
-                   </label>
-                   <input
-                     type="text"
-                     value={openaiAgentId}
-                     onChange={(e) => setOpenaiAgentId(e.target.value)}
-                     placeholder="asst_..."
-                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                   />
-                   <p className="text-sm text-gray-500 mt-1">
-                     Deixe vazio para criar automaticamente um novo agente
-                   </p>
-                 </div>
-
-                 {/* Model */}
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     Modelo do Agente
-                   </label>
-                   <select
-                     value={openaiModel}
-                     onChange={(e) => setOpenaiModel(e.target.value)}
-                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                   >
-                     <option value="gpt-4-turbo-preview">GPT-4 Turbo (Recomendado)</option>
-                     <option value="gpt-4">GPT-4</option>
-                     <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                   </select>
-                   <p className="text-sm text-gray-500 mt-1">
-                     Modelo que será usado pelo agente
-                   </p>
-                 </div>
-
-                 {/* Instructions */}
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     Instruções do Agente
-                   </label>
-                   <textarea
-                     value={openaiAgentInstructions}
-                     onChange={(e) => setOpenaiAgentInstructions(e.target.value)}
-                     placeholder="Digite as instruções específicas para o agente..."
-                     rows={6}
-                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                   />
-                   <p className="text-sm text-gray-500 mt-1">
-                     Instruções personalizadas para o comportamento do agente. Deixe vazio para usar o template padrão.
-                   </p>
-                 </div>
+                                   {/* Agent ID */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ID do Agente
+                    </label>
+                    <input
+                      type="text"
+                      value={openaiAgentId}
+                      onChange={(e) => setOpenaiAgentId(e.target.value)}
+                      placeholder="asst_..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      ID do agente criado no playground da OpenAI
+                    </p>
+                  </div>
 
                  <div className="flex space-x-3">
                    <button
