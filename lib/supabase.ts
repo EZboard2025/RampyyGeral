@@ -43,6 +43,7 @@ export interface ConfiguracaoEmpresa {
   feature_base_conhecimento: boolean
   feature_mentor_voz: boolean
   openai_api_key?: string
+  openai_agent_id?: string
   elevenlabs_api_key?: string
   created_at: string
   updated_at: string
