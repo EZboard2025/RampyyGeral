@@ -223,14 +223,58 @@ export class OpenAIService {
 // Função para obter configuração da empresa
 export async function getEmpresaConfig(empresaId: string) {
   try {
-    const { data, error } = await supabase
+    console.log('Buscando configuração para empresa:', empresaId)
+    
+    // Primeiro, vamos verificar se existe uma configuração para esta empresa
+    const { data: existingConfig, error: checkError } = await supabase
       .from('configuracoes_empresa')
-      .select('*')
+      .select('id')
       .eq('empresa_id', empresaId)
       .single()
 
-    if (error) throw error
-    return data
+    if (checkError && checkError.code === 'PGRST116') {
+      // Configuração não existe, vamos criar uma
+      console.log('Criando nova configuração para empresa')
+      const { data: newConfig, error: createError } = await supabase
+        .from('configuracoes_empresa')
+        .insert({
+          empresa_id: empresaId,
+          feature_chat_ia: true,
+          feature_roleplay: true,
+          feature_pdi: true,
+          feature_dashboard: true,
+          feature_base_conhecimento: true,
+          feature_mentor_voz: true
+        })
+        .select()
+        .single()
+
+      if (createError) {
+        console.error('Erro ao criar configuração:', createError)
+        throw createError
+      }
+      
+      console.log('Nova configuração criada:', newConfig)
+      return newConfig
+    } else if (checkError) {
+      console.error('Erro na consulta Supabase:', checkError)
+      throw checkError
+    } else {
+      // Configuração existe, vamos carregar
+      const { data, error } = await supabase
+        .from('configuracoes_empresa')
+        .select('*')
+        .eq('empresa_id', empresaId)
+        .single()
+
+      if (error) {
+        console.error('Erro na consulta Supabase:', error)
+        throw error
+      }
+      
+      console.log('Configuração encontrada:', data)
+      return data
+    }
   } catch (error) {
     console.error('Erro ao buscar configuração da empresa:', error)
     return null

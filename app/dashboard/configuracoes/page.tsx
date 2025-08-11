@@ -70,21 +70,57 @@ export default function ConfiguracoesPage() {
         return
       }
 
-      const { data, error } = await supabase
+      console.log('Carregando configuração para empresa:', empresaSelecionada.id)
+
+      // Primeiro, vamos verificar se existe uma configuração para esta empresa
+      const { data: existingConfig, error: checkError } = await supabase
         .from('configuracoes_empresa')
-        .select('*')
+        .select('id')
         .eq('empresa_id', empresaSelecionada.id)
         .single()
 
-      if (error) throw error
+      if (checkError && checkError.code === 'PGRST116') {
+        // Configuração não existe, vamos criar uma
+        console.log('Criando nova configuração para empresa')
+        const { data: newConfig, error: createError } = await supabase
+          .from('configuracoes_empresa')
+          .insert({
+            empresa_id: empresaSelecionada.id,
+            feature_chat_ia: true,
+            feature_roleplay: true,
+            feature_pdi: true,
+            feature_dashboard: true,
+            feature_base_conhecimento: true,
+            feature_mentor_voz: true
+          })
+          .select()
+          .single()
 
-      setConfiguracao(data)
-      setOpenaiApiKey(data.openai_api_key || '')
-      setElevenlabsApiKey(data.elevenlabs_api_key || '')
-      setOpenaiAgentId(data.openai_agent_id || '')
+        if (createError) throw createError
+        setConfiguracao(newConfig)
+        setOpenaiApiKey('')
+        setElevenlabsApiKey('')
+        setOpenaiAgentId('')
+      } else if (checkError) {
+        throw checkError
+      } else {
+        // Configuração existe, vamos carregar
+        const { data, error } = await supabase
+          .from('configuracoes_empresa')
+          .select('*')
+          .eq('empresa_id', empresaSelecionada.id)
+          .single()
+
+        if (error) throw error
+
+        setConfiguracao(data)
+        setOpenaiApiKey(data.openai_api_key || '')
+        setElevenlabsApiKey(data.elevenlabs_api_key || '')
+        setOpenaiAgentId(data.openai_agent_id || '')
+      }
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
-      setMessage({ type: 'error', text: 'Erro ao carregar configurações' })
+      setMessage({ type: 'error', text: 'Erro ao carregar configurações: ' + (error instanceof Error ? error.message : 'Erro desconhecido') })
     } finally {
       setLoading(false)
     }
