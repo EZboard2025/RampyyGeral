@@ -45,6 +45,7 @@ export default function ConfiguracoesPage() {
   const [elevenlabsApiKey, setElevenlabsApiKey] = useState('')
   const [openaiAgentId, setOpenaiAgentId] = useState('')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [dbError, setDbError] = useState(false)
   
   const router = useRouter()
   const { empresaSelecionada, usuarioLogado } = useAppStore()
@@ -79,7 +80,8 @@ export default function ConfiguracoesPage() {
 
       if (error) {
         console.error('Erro ao carregar configuração:', error)
-        setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
+        setDbError(true)
+        setMessage({ type: 'error', text: 'Erro no banco de dados. Execute o SQL de correção primeiro.' })
         return
       }
 
@@ -89,6 +91,7 @@ export default function ConfiguracoesPage() {
       setOpenaiAgentId(data.openai_agent_id || '')
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
+      setDbError(true)
       setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
     } finally {
       setLoading(false)
@@ -104,12 +107,12 @@ export default function ConfiguracoesPage() {
     try {
       const { error } = await supabase
         .from('configuracoes_empresa')
-                 .update({
-           openai_api_key: openaiApiKey || null,
-           elevenlabs_api_key: elevenlabsApiKey || null,
-           openai_agent_id: openaiAgentId || null,
-           updated_at: new Date().toISOString()
-         })
+        .update({
+          openai_api_key: openaiApiKey || null,
+          elevenlabs_api_key: elevenlabsApiKey || null,
+          openai_agent_id: openaiAgentId || null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', configuracao.id)
 
       if (error) throw error
@@ -211,6 +214,73 @@ export default function ConfiguracoesPage() {
     )
   }
 
+  if (dbError) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50">
+          <header className="bg-white shadow-sm border-b">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                <div className="flex items-center">
+                  <button
+                    onClick={handleVoltar}
+                    className="flex items-center text-gray-500 hover:text-gray-700 mr-4"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Voltar
+                  </button>
+                  <h1 className="text-xl font-semibold text-gray-900">
+                    Erro no Banco de Dados
+                  </h1>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div className="px-4 py-6 sm:px-0">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <AlertCircle className="h-6 w-6 text-red-500 mr-3" />
+                  <h2 className="text-lg font-semibold text-red-800">
+                    Banco de Dados Precisa ser Corrigido
+                  </h2>
+                </div>
+                
+                <p className="text-red-700 mb-4">
+                  As colunas necessárias para a integração com OpenAI não existem no banco de dados.
+                </p>
+
+                <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold mb-2">Execute este SQL no Supabase:</h3>
+                  <code className="text-sm bg-white p-2 rounded block">
+                    ALTER TABLE configuracoes_empresa ADD COLUMN IF NOT EXISTS openai_api_key TEXT;<br/>
+                    ALTER TABLE configuracoes_empresa ADD COLUMN IF NOT EXISTS openai_agent_id TEXT;
+                  </code>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    Recarregar Página
+                  </button>
+                  <button
+                    onClick={handleVoltar}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                  >
+                    Voltar ao Dashboard
+                  </button>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
@@ -261,83 +331,83 @@ export default function ConfiguracoesPage() {
         {/* Main Content */}
         <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-                         {/* OpenAI Configuration */}
-             <div className="card mb-6">
-               <div className="flex items-center mb-4">
-                 <Bot className="h-6 w-6 mr-3 text-purple-500" />
-                 <h2 className="text-xl font-semibold text-gray-900">
-                   Configuração do Assistente de IA
-                 </h2>
-               </div>
-               
-               <div className="space-y-6">
-                 {/* API Key */}
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     API Key da OpenAI
-                   </label>
-                   <div className="relative">
-                     <input
-                       type={showOpenAIKey ? 'text' : 'password'}
-                       value={openaiApiKey}
-                       onChange={(e) => setOpenaiApiKey(e.target.value)}
-                       placeholder="sk-..."
-                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-                     />
-                     <button
-                       type="button"
-                       onClick={() => setShowOpenAIKey(!showOpenAIKey)}
-                       className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                     >
-                       {showOpenAIKey ? (
-                         <EyeOff className="h-5 w-5 text-gray-400" />
-                       ) : (
-                         <Eye className="h-5 w-5 text-gray-400" />
-                       )}
-                     </button>
-                   </div>
-                   <p className="text-sm text-gray-500 mt-1">
-                     Chave necessária para o funcionamento do Chat IA
-                   </p>
-                 </div>
-
-                                   {/* Agent ID */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ID do Agente
-                    </label>
+            {/* OpenAI Configuration */}
+            <div className="card mb-6">
+              <div className="flex items-center mb-4">
+                <Bot className="h-6 w-6 mr-3 text-purple-500" />
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Configuração do Assistente de IA
+                </h2>
+              </div>
+              
+              <div className="space-y-6">
+                {/* API Key */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    API Key da OpenAI
+                  </label>
+                  <div className="relative">
                     <input
-                      type="text"
-                      value={openaiAgentId}
-                      onChange={(e) => setOpenaiAgentId(e.target.value)}
-                      placeholder="asst_..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      type={showOpenAIKey ? 'text' : 'password'}
+                      value={openaiApiKey}
+                      onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      placeholder="sk-..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
                     />
-                    <p className="text-sm text-gray-500 mt-1">
-                      ID do agente criado no playground da OpenAI
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowOpenAIKey(!showOpenAIKey)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      {showOpenAIKey ? (
+                        <EyeOff className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
                   </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Chave necessária para o funcionamento do Chat IA
+                  </p>
+                </div>
 
-                 <div className="flex space-x-3">
-                   <button
-                     onClick={testarOpenAI}
-                     disabled={saving || !openaiApiKey}
-                     className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
-                   >
-                     <CheckCircle className="h-4 w-4 mr-2" />
-                     Testar API Key
-                   </button>
-                   <button
-                     onClick={testarAgente}
-                     disabled={saving || !openaiApiKey}
-                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
-                   >
-                     <Bot className="h-4 w-4 mr-2" />
-                     Testar Agente
-                   </button>
-                 </div>
-               </div>
-             </div>
+                {/* Agent ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ID do Agente
+                  </label>
+                  <input
+                    type="text"
+                    value={openaiAgentId}
+                    onChange={(e) => setOpenaiAgentId(e.target.value)}
+                    placeholder="asst_..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    ID do agente criado no playground da OpenAI
+                  </p>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    onClick={testarOpenAI}
+                    disabled={saving || !openaiApiKey}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Testar API Key
+                  </button>
+                  <button
+                    onClick={testarAgente}
+                    disabled={saving || !openaiApiKey}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <Bot className="h-4 w-4 mr-2" />
+                    Testar Agente
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* ElevenLabs Configuration */}
             <div className="card mb-6">
