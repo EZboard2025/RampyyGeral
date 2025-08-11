@@ -50,13 +50,18 @@ Primeiro, execute estes scripts no Supabase:
 -- Execute o conteúdo de adicionar_usuario_dev_innovatelab.sql
 ```
 
-### 2. Configure a API Key da OpenAI
+### 2. Configure o Agente da OpenAI
 
 1. Acesse o dashboard da empresa como gestor
 2. Vá para "Configurações"
-3. Digite sua API Key da OpenAI (formato: `sk-...`)
-4. Clique em "Testar API Key" para verificar
-5. Salve as configurações
+3. Configure os campos do Chat IA:
+   - **API Key da OpenAI**: Digite sua chave (formato: `sk-...`)
+   - **ID do Agente** (opcional): Se você já tem um agente criado no playground
+   - **Modelo**: Escolha o modelo (GPT-4 Turbo recomendado)
+   - **Instruções**: Personalize o comportamento do agente
+4. Clique em "Testar API Key" para verificar a conectividade
+5. Clique em "Testar Agente" para testar o agente
+6. Salve as configurações
 
 ### 3. Teste o Chat IA
 
@@ -112,8 +117,9 @@ O sistema inclui templates específicos para cada empresa:
 
 ### Novos Campos em `configuracoes_empresa`:
 - `openai_api_key` - Chave da API da OpenAI
-- `openai_agent_id` - ID do agente criado
-- `openai_agent_instructions` - Instruções personalizadas
+- `openai_agent_id` - ID do agente criado (opcional)
+- `openai_agent_instructions` - Instruções personalizadas do agente
+- `openai_model` - Modelo do agente (gpt-4-turbo-preview, gpt-4, gpt-3.5-turbo)
 
 ## Segurança
 

@@ -26,16 +26,26 @@ export async function POST(request: NextRequest) {
     // Criar instância do serviço OpenAI
     const openaiService = new OpenAIService(config.openai_api_key)
 
-    // Determinar qual template usar baseado no nome da empresa
-    let agentTemplate = AGENT_TEMPLATES.template // padrão
-    
-    if (empresaId.includes('techcorp') || empresaId.includes('TechCorp')) {
-      agentTemplate = AGENT_TEMPLATES.techcorp
-    } else if (empresaId.includes('salespro') || empresaId.includes('SalesPro')) {
-      agentTemplate = AGENT_TEMPLATES.salespro
-    } else if (empresaId.includes('innovatelab') || empresaId.includes('InnovateLab')) {
-      agentTemplate = AGENT_TEMPLATES.innovatelab
-    }
+         // Usar configurações personalizadas ou template padrão
+     let agentTemplate = AGENT_TEMPLATES.template // padrão
+     
+     // Se há instruções personalizadas, usar elas
+     if (config.openai_agent_instructions) {
+       agentTemplate = {
+         name: `Assistente ${config.empresa_id}`,
+         instructions: config.openai_agent_instructions,
+         model: config.openai_model || 'gpt-4-turbo-preview'
+       }
+     } else {
+       // Usar template baseado no nome da empresa
+       if (empresaId.includes('techcorp') || empresaId.includes('TechCorp')) {
+         agentTemplate = AGENT_TEMPLATES.techcorp
+       } else if (empresaId.includes('salespro') || empresaId.includes('SalesPro')) {
+         agentTemplate = AGENT_TEMPLATES.salespro
+       } else if (empresaId.includes('innovatelab') || empresaId.includes('InnovateLab')) {
+         agentTemplate = AGENT_TEMPLATES.innovatelab
+       }
+     }
 
     // Buscar ou criar agente para esta empresa
     let agentId = config.openai_agent_id
