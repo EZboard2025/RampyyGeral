@@ -30,8 +30,6 @@ interface ConfiguracaoEmpresa {
   feature_mentor_voz: boolean
   openai_api_key?: string
   openai_agent_id?: string
-  openai_agent_instructions?: string
-  openai_model?: string
   elevenlabs_api_key?: string
   created_at: string
   updated_at: string
@@ -72,14 +70,14 @@ export default function ConfiguracoesPage() {
 
       console.log('Carregando configuração para empresa:', empresaSelecionada.id)
 
-      // Primeiro, vamos verificar se existe uma configuração para esta empresa
-      const { data: existingConfig, error: checkError } = await supabase
+      // Tentar carregar configuração existente
+      const { data, error } = await supabase
         .from('configuracoes_empresa')
-        .select('id')
+        .select('*')
         .eq('empresa_id', empresaSelecionada.id)
         .single()
 
-      if (checkError && checkError.code === 'PGRST116') {
+      if (error && error.code === 'PGRST116') {
         // Configuração não existe, vamos criar uma
         console.log('Criando nova configuração para empresa')
         const { data: newConfig, error: createError } = await supabase
@@ -96,23 +94,19 @@ export default function ConfiguracoesPage() {
           .select()
           .single()
 
-        if (createError) throw createError
+        if (createError) {
+          console.error('Erro ao criar configuração:', createError)
+          throw createError
+        }
+        
         setConfiguracao(newConfig)
         setOpenaiApiKey('')
         setElevenlabsApiKey('')
         setOpenaiAgentId('')
-      } else if (checkError) {
-        throw checkError
+      } else if (error) {
+        console.error('Erro ao carregar configuração:', error)
+        throw error
       } else {
-        // Configuração existe, vamos carregar
-        const { data, error } = await supabase
-          .from('configuracoes_empresa')
-          .select('*')
-          .eq('empresa_id', empresaSelecionada.id)
-          .single()
-
-        if (error) throw error
-
         setConfiguracao(data)
         setOpenaiApiKey(data.openai_api_key || '')
         setElevenlabsApiKey(data.elevenlabs_api_key || '')

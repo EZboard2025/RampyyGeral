@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { OpenAIService, AGENT_TEMPLATES, getEmpresaConfig } from '@/lib/openai'
+import { OpenAIService, getEmpresaConfig } from '@/lib/openai'
 import { supabase } from '@/lib/supabase'
 
 // POST - Enviar mensagem para o agente

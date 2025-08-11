@@ -1,39 +1,41 @@
 -- Execute este SQL no painel do Supabase (SQL Editor)
--- Para adicionar os campos necessários para integração com OpenAI
+-- Para corrigir a estrutura da tabela configuracoes_empresa
 
--- Adicionar colunas para OpenAI na tabela configuracoes_empresa
-ALTER TABLE configuracoes_empresa 
-ADD COLUMN IF NOT EXISTS openai_api_key TEXT,
-ADD COLUMN IF NOT EXISTS openai_agent_id TEXT,
-ADD COLUMN IF NOT EXISTS openai_agent_instructions TEXT,
-ADD COLUMN IF NOT EXISTS openai_model TEXT DEFAULT 'gpt-4-turbo-preview';
-
--- Verificar se as colunas foram adicionadas
+-- 1. Primeiro, vamos verificar a estrutura atual da tabela
 SELECT 
   column_name, 
   data_type, 
   is_nullable
 FROM information_schema.columns 
 WHERE table_name = 'configuracoes_empresa' 
-AND column_name IN ('openai_api_key', 'openai_agent_id', 'openai_agent_instructions', 'openai_model')
 ORDER BY column_name;
 
--- Atualizar configurações existentes com valores padrão
-UPDATE configuracoes_empresa 
-SET 
-  openai_api_key = NULL,
-  openai_agent_id = NULL,
-  openai_agent_instructions = NULL,
-  openai_model = 'gpt-4-turbo-preview'
-WHERE openai_api_key IS NULL;
+-- 2. Adicionar apenas as colunas necessárias para OpenAI
+ALTER TABLE configuracoes_empresa 
+ADD COLUMN IF NOT EXISTS openai_api_key TEXT,
+ADD COLUMN IF NOT EXISTS openai_agent_id TEXT;
 
--- Verificar configurações atuais
+-- 3. Remover colunas desnecessárias (se existirem)
+ALTER TABLE configuracoes_empresa 
+DROP COLUMN IF EXISTS openai_agent_instructions,
+DROP COLUMN IF EXISTS openai_model;
+
+-- 4. Verificar se as colunas foram adicionadas corretamente
+SELECT 
+  column_name, 
+  data_type, 
+  is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'configuracoes_empresa' 
+AND column_name IN ('openai_api_key', 'openai_agent_id')
+ORDER BY column_name;
+
+-- 5. Verificar configurações atuais
 SELECT 
   e.nome as empresa,
+  c.id as config_id,
   c.openai_api_key IS NOT NULL as tem_api_key,
-  c.openai_agent_id IS NOT NULL as tem_agente,
-  c.openai_agent_instructions IS NOT NULL as tem_instrucoes,
-  c.openai_model as modelo
+  c.openai_agent_id IS NOT NULL as tem_agente
 FROM empresas e
-JOIN configuracoes_empresa c ON e.id = c.empresa_id
+LEFT JOIN configuracoes_empresa c ON e.id = c.empresa_id
 ORDER BY e.nome;

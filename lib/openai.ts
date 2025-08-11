@@ -225,14 +225,14 @@ export async function getEmpresaConfig(empresaId: string) {
   try {
     console.log('Buscando configuração para empresa:', empresaId)
     
-    // Primeiro, vamos verificar se existe uma configuração para esta empresa
-    const { data: existingConfig, error: checkError } = await supabase
+    // Tentar carregar configuração existente
+    const { data, error } = await supabase
       .from('configuracoes_empresa')
-      .select('id')
+      .select('*')
       .eq('empresa_id', empresaId)
       .single()
 
-    if (checkError && checkError.code === 'PGRST116') {
+    if (error && error.code === 'PGRST116') {
       // Configuração não existe, vamos criar uma
       console.log('Criando nova configuração para empresa')
       const { data: newConfig, error: createError } = await supabase
@@ -256,22 +256,10 @@ export async function getEmpresaConfig(empresaId: string) {
       
       console.log('Nova configuração criada:', newConfig)
       return newConfig
-    } else if (checkError) {
-      console.error('Erro na consulta Supabase:', checkError)
-      throw checkError
+    } else if (error) {
+      console.error('Erro na consulta Supabase:', error)
+      throw error
     } else {
-      // Configuração existe, vamos carregar
-      const { data, error } = await supabase
-        .from('configuracoes_empresa')
-        .select('*')
-        .eq('empresa_id', empresaId)
-        .single()
-
-      if (error) {
-        console.error('Erro na consulta Supabase:', error)
-        throw error
-      }
-      
       console.log('Configuração encontrada:', data)
       return data
     }
@@ -286,61 +274,4 @@ export function createOpenAIService(apiKey: string): OpenAIService {
   return new OpenAIService(apiKey)
 }
 
-// Templates de instruções para diferentes tipos de empresa
-export const AGENT_TEMPLATES = {
-  template: {
-    name: 'Assistente Template',
-    instructions: `Você é um assistente IA especializado em ajudar funcionários da empresa Template.
-    
-    Suas responsabilidades incluem:
-    - Responder dúvidas sobre processos da empresa
-    - Ajudar com treinamentos e desenvolvimento
-    - Fornecer informações sobre produtos e serviços
-    - Auxiliar em questões de vendas e atendimento
-    
-    Sempre seja cordial, profissional e útil. Se não souber algo, seja honesto sobre isso.`,
-    model: 'gpt-4-turbo-preview'
-  },
-  
-  techcorp: {
-    name: 'Assistente TechCorp',
-    instructions: `Você é um assistente IA especializado em tecnologia e software da empresa TechCorp.
-    
-    Suas responsabilidades incluem:
-    - Ajudar com vendas de software empresarial
-    - Explicar funcionalidades técnicas dos produtos
-    - Auxiliar em demonstrações e apresentações
-    - Responder dúvidas sobre implementação e suporte
-    
-    Use linguagem técnica quando apropriado, mas sempre de forma clara e acessível.`,
-    model: 'gpt-4-turbo-preview'
-  },
-  
-  salespro: {
-    name: 'Assistente SalesPro',
-    instructions: `Você é um assistente IA especializado em vendas e consultoria da empresa SalesPro.
-    
-    Suas responsabilidades incluem:
-    - Ajudar com técnicas de vendas e prospecção
-    - Auxiliar em propostas comerciais
-    - Fornecer insights sobre mercado e concorrência
-    - Apoiar em treinamentos de vendas
-    
-    Foque em resultados e ROI para o cliente. Seja persuasivo mas ético.`,
-    model: 'gpt-4-turbo-preview'
-  },
-  
-  innovatelab: {
-    name: 'Assistente InnovateLab',
-    instructions: `Você é um assistente IA especializado em inovação e pesquisa da empresa InnovateLab.
-    
-    Suas responsabilidades incluem:
-    - Ajudar com projetos de inovação
-    - Auxiliar em pesquisas e desenvolvimento
-    - Fornecer insights sobre tendências tecnológicas
-    - Apoiar em apresentações de projetos inovadores
-    
-    Seja criativo e visionário, mas sempre baseado em dados e fatos.`,
-    model: 'gpt-4-turbo-preview'
-  }
-}
+
