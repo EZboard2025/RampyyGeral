@@ -70,51 +70,26 @@ export default function ConfiguracoesPage() {
 
       console.log('Carregando configuração para empresa:', empresaSelecionada.id)
 
-      // Tentar carregar configuração existente
+      // Buscar configuração existente
       const { data, error } = await supabase
         .from('configuracoes_empresa')
         .select('*')
         .eq('empresa_id', empresaSelecionada.id)
         .single()
 
-      if (error && error.code === 'PGRST116') {
-        // Configuração não existe, vamos criar uma
-        console.log('Criando nova configuração para empresa')
-        const { data: newConfig, error: createError } = await supabase
-          .from('configuracoes_empresa')
-          .insert({
-            empresa_id: empresaSelecionada.id,
-            feature_chat_ia: true,
-            feature_roleplay: true,
-            feature_pdi: true,
-            feature_dashboard: true,
-            feature_base_conhecimento: true,
-            feature_mentor_voz: true
-          })
-          .select()
-          .single()
-
-        if (createError) {
-          console.error('Erro ao criar configuração:', createError)
-          throw createError
-        }
-        
-        setConfiguracao(newConfig)
-        setOpenaiApiKey('')
-        setElevenlabsApiKey('')
-        setOpenaiAgentId('')
-      } else if (error) {
+      if (error) {
         console.error('Erro ao carregar configuração:', error)
-        throw error
-      } else {
-        setConfiguracao(data)
-        setOpenaiApiKey(data.openai_api_key || '')
-        setElevenlabsApiKey(data.elevenlabs_api_key || '')
-        setOpenaiAgentId(data.openai_agent_id || '')
+        setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
+        return
       }
+
+      setConfiguracao(data)
+      setOpenaiApiKey(data.openai_api_key || '')
+      setElevenlabsApiKey(data.elevenlabs_api_key || '')
+      setOpenaiAgentId(data.openai_agent_id || '')
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
-      setMessage({ type: 'error', text: 'Erro ao carregar configurações: ' + (error instanceof Error ? error.message : 'Erro desconhecido') })
+      setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
     } finally {
       setLoading(false)
     }
