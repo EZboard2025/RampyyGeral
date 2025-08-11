@@ -18,6 +18,7 @@ export interface ChatMessage {
 // Interface para resposta da API
 export interface ChatResponse {
   content: string
+  threadId?: string
   usage?: {
     prompt_tokens: number
     completion_tokens: number
@@ -167,6 +168,7 @@ export class OpenAIService {
 
       return {
         content: lastMessage.content[0].text.value,
+        threadId: currentThreadId,
         usage: runData.usage
       }
     } catch (error) {

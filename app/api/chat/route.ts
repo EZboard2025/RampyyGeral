@@ -23,62 +23,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!config.openai_agent_id) {
+      return NextResponse.json(
+        { error: 'ID do agente não configurado para esta empresa' },
+        { status: 400 }
+      )
+    }
+
     // Criar instância do serviço OpenAI
     const openaiService = new OpenAIService(config.openai_api_key)
 
-         // Usar configurações personalizadas ou template padrão
-     let agentTemplate = AGENT_TEMPLATES.template // padrão
-     
-     // Se há instruções personalizadas, usar elas
-     if (config.openai_agent_instructions) {
-       agentTemplate = {
-         name: `Assistente ${config.empresa_id}`,
-         instructions: config.openai_agent_instructions,
-         model: config.openai_model || 'gpt-4-turbo-preview'
-       }
-     } else {
-       // Usar template baseado no nome da empresa
-       if (empresaId.includes('techcorp') || empresaId.includes('TechCorp')) {
-         agentTemplate = AGENT_TEMPLATES.techcorp
-       } else if (empresaId.includes('salespro') || empresaId.includes('SalesPro')) {
-         agentTemplate = AGENT_TEMPLATES.salespro
-       } else if (empresaId.includes('innovatelab') || empresaId.includes('InnovateLab')) {
-         agentTemplate = AGENT_TEMPLATES.innovatelab
-       }
-     }
-
-    // Buscar ou criar agente para esta empresa
-    let agentId = config.openai_agent_id
-
-    if (!agentId) {
-      // Criar novo agente
-      agentId = await openaiService.createAgent({
-        id: empresaId,
-        name: agentTemplate.name,
-        instructions: agentTemplate.instructions,
-        model: agentTemplate.model
-      })
-
-      // Salvar o ID do agente na configuração da empresa
-      await supabase
-        .from('configuracoes_empresa')
-        .update({ openai_agent_id: agentId })
-        .eq('empresa_id', empresaId)
-    }
-
     // Enviar mensagem para o agente
-    const response = await openaiService.sendMessage(agentId, message, threadId)
+    const response = await openaiService.sendMessage(config.openai_agent_id, message, threadId)
 
     return NextResponse.json({
       content: response.content,
-      threadId: threadId, // Retornar o threadId para continuar a conversa
+      threadId: response.threadId || threadId, // Retornar o threadId para continuar a conversa
       usage: response.usage
     })
 
   } catch (error) {
     console.error('Erro no chat:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor: ' + (error instanceof Error ? error.message : 'Erro desconhecido') },
       { status: 500 }
     )
   }

@@ -57,23 +57,31 @@ export default function ConfiguracoesPage() {
       return
     }
     
-    carregarConfiguracao()
+    if (empresaSelecionada?.id) {
+      carregarConfiguracao()
+    }
   }, [usuarioLogado, empresaSelecionada])
 
   const carregarConfiguracao = async () => {
     try {
+      if (!empresaSelecionada?.id) {
+        console.error('Empresa não selecionada')
+        setMessage({ type: 'error', text: 'Empresa não selecionada' })
+        return
+      }
+
       const { data, error } = await supabase
         .from('configuracoes_empresa')
         .select('*')
-        .eq('empresa_id', empresaSelecionada?.id)
+        .eq('empresa_id', empresaSelecionada.id)
         .single()
 
       if (error) throw error
 
-             setConfiguracao(data)
-       setOpenaiApiKey(data.openai_api_key || '')
-       setElevenlabsApiKey(data.elevenlabs_api_key || '')
-       setOpenaiAgentId(data.openai_agent_id || '')
+      setConfiguracao(data)
+      setOpenaiApiKey(data.openai_api_key || '')
+      setElevenlabsApiKey(data.elevenlabs_api_key || '')
+      setOpenaiAgentId(data.openai_agent_id || '')
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
       setMessage({ type: 'error', text: 'Erro ao carregar configurações' })
@@ -127,7 +135,7 @@ export default function ConfiguracoesPage() {
     setMessage(null)
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(`/api/chat?empresaId=${empresaSelecionada?.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +145,8 @@ export default function ConfiguracoesPage() {
       if (response.ok) {
         setMessage({ type: 'success', text: 'API Key da OpenAI válida!' })
       } else {
-        setMessage({ type: 'error', text: 'API Key da OpenAI inválida' })
+        const errorData = await response.json()
+        setMessage({ type: 'error', text: 'API Key da OpenAI inválida: ' + (errorData.error || 'Erro desconhecido') })
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Erro ao testar API Key' })
@@ -149,6 +158,11 @@ export default function ConfiguracoesPage() {
   const testarAgente = async () => {
     if (!openaiApiKey) {
       setMessage({ type: 'error', text: 'Digite uma API Key da OpenAI primeiro' })
+      return
+    }
+
+    if (!openaiAgentId) {
+      setMessage({ type: 'error', text: 'Digite o ID do agente primeiro' })
       return
     }
 
