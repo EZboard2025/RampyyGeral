@@ -71,7 +71,7 @@ export default function ConfiguracoesPage() {
 
       console.log('Carregando configuração para empresa:', empresaSelecionada.id)
 
-      // Buscar configuração existente
+      // Tentar carregar todas as colunas incluindo as do OpenAI
       const { data, error } = await supabase
         .from('configuracoes_empresa')
         .select('*')
@@ -80,19 +80,100 @@ export default function ConfiguracoesPage() {
 
       if (error) {
         console.error('Erro ao carregar configuração:', error)
+        
+              // Se o erro for relacionado a colunas não existentes, tentar carregar sem as colunas OpenAI
+      if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && (error.message.includes('column') || error.message.includes('does not exist'))) {
+          console.log('Colunas OpenAI não existem, tentando carregar sem elas')
+          
+          const { data: basicData, error: basicError } = await supabase
+            .from('configuracoes_empresa')
+            .select('id, empresa_id, feature_chat_ia, feature_roleplay, feature_pdi, feature_dashboard, feature_base_conhecimento, feature_mentor_voz, elevenlabs_api_key, created_at, updated_at')
+            .eq('empresa_id', empresaSelecionada.id)
+            .single()
+
+          if (basicError) {
+            console.error('Erro ao carregar configuração básica:', basicError)
+            setDbError(true)
+            setMessage({ type: 'error', text: 'Erro no banco de dados. Execute o SQL de correção primeiro.' })
+            return
+          }
+
+          setConfiguracao(basicData)
+          setOpenaiApiKey('')
+          setElevenlabsApiKey(basicData.elevenlabs_api_key || '')
+          setOpenaiAgentId('')
+          setDbError(true)
+          setMessage({ type: 'error', text: 'Colunas OpenAI não existem. Execute o SQL de correção.' })
+          return
+        }
+        
         setDbError(true)
         setMessage({ type: 'error', text: 'Erro no banco de dados. Execute o SQL de correção primeiro.' })
         return
       }
 
+      // Se chegou até aqui, as colunas existem
       setConfiguracao(data)
       setOpenaiApiKey(data.openai_api_key || '')
       setElevenlabsApiKey(data.elevenlabs_api_key || '')
       setOpenaiAgentId(data.openai_agent_id || '')
+      setDbError(false)
+      setMessage(null)
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
-      setDbError(true)
-      setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
+      
+      // Se o erro for "no rows returned", criar configuração padrão
+      if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.includes('No rows returned')) {
+        console.log('Nenhuma configuração encontrada, criando configuração padrão')
+        
+        if (!empresaSelecionada?.id) {
+          setDbError(true)
+          setMessage({ type: 'error', text: 'Empresa não selecionada' })
+          return
+        }
+        
+        try {
+          const { data: newConfig, error: createError } = await supabase
+            .from('configuracoes_empresa')
+            .insert({
+              empresa_id: empresaSelecionada.id,
+              feature_chat_ia: true,
+              feature_roleplay: true,
+              feature_pdi: true,
+              feature_dashboard: true,
+              feature_base_conhecimento: true,
+              feature_mentor_voz: true,
+              openai_api_key: null,
+              openai_agent_id: null,
+              openai_agent_instructions: null,
+              openai_model: 'gpt-4-turbo-preview',
+              elevenlabs_api_key: null
+            })
+            .select()
+            .single()
+
+          if (createError) {
+            console.error('Erro ao criar configuração:', createError)
+            setDbError(true)
+            setMessage({ type: 'error', text: 'Erro ao criar configuração padrão' })
+            return
+          }
+
+          setConfiguracao(newConfig)
+          setOpenaiApiKey('')
+          setElevenlabsApiKey('')
+          setOpenaiAgentId('')
+          setDbError(false)
+          setMessage({ type: 'success', text: 'Configuração padrão criada com sucesso!' })
+        } catch (createError) {
+          console.error('Erro ao criar configuração:', createError)
+          setDbError(true)
+          setMessage({ type: 'error', text: 'Erro ao criar configuração padrão' })
+        }
+      } else {
+        setDbError(true)
+        setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
+      }
     } finally {
       setLoading(false)
     }
