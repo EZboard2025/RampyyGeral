@@ -94,7 +94,20 @@ export default function ConfiguracoesPage() {
 
       console.log('Carregando configuração para empresa:', empresaSelecionada.id)
 
-      // Tentar carregar todas as colunas incluindo as do OpenAI
+      // Primeiro, vamos verificar se a tabela existe fazendo uma consulta simples
+      const { data: testData, error: testError } = await supabase
+        .from('configuracoes_empresa')
+        .select('id')
+        .limit(1)
+
+      if (testError) {
+        console.error('Erro ao verificar tabela:', testError)
+        setDbError(true)
+        setMessage({ type: 'error', text: 'Tabela de configurações não existe. Execute o SQL de correção primeiro.' })
+        return
+      }
+
+      // Agora tentar carregar a configuração específica
       const { data, error } = await supabase
         .from('configuracoes_empresa')
         .select('*')
@@ -103,9 +116,61 @@ export default function ConfiguracoesPage() {
 
       if (error) {
         console.error('Erro ao carregar configuração:', error)
+        console.error('Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         
-              // Se o erro for relacionado a colunas não existentes, tentar carregar sem as colunas OpenAI
-        if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && (error.message.includes('column') || error.message.includes('does not exist'))) {
+        // Se o erro for "no rows returned", criar configuração padrão
+        if (error.code === 'PGRST116' || (error.message && error.message.includes('No rows returned'))) {
+          console.log('Nenhuma configuração encontrada, criando configuração padrão')
+          
+          try {
+            const { data: newConfig, error: createError } = await supabase
+              .from('configuracoes_empresa')
+              .insert({
+                empresa_id: empresaSelecionada.id,
+                feature_chat_ia: true,
+                feature_roleplay: true,
+                feature_pdi: true,
+                feature_dashboard: true,
+                feature_base_conhecimento: true,
+                feature_mentor_voz: true,
+                openai_api_key: null,
+                openai_agent_id: null,
+                openai_agent_instructions: null,
+                openai_model: 'gpt-4-turbo-preview',
+                elevenlabs_api_key: null
+              })
+              .select()
+              .single()
+
+            if (createError) {
+              console.error('Erro ao criar configuração:', createError)
+              setDbError(true)
+              setMessage({ type: 'error', text: 'Erro ao criar configuração padrão: ' + createError.message })
+              return
+            }
+
+            setConfiguracao(newConfig)
+            setOpenaiApiKey('')
+            setElevenlabsApiKey('')
+            setOpenaiAgentId('')
+            setDbError(false)
+            setMessage({ type: 'success', text: 'Configuração padrão criada com sucesso!' })
+            return
+          } catch (createError) {
+            console.error('Erro ao criar configuração:', createError)
+            setDbError(true)
+            setMessage({ type: 'error', text: 'Erro ao criar configuração padrão' })
+            return
+          }
+        }
+        
+        // Se o erro for relacionado a colunas não existentes, tentar carregar sem as colunas OpenAI
+        if (error.message && (error.message.includes('column') || error.message.includes('does not exist'))) {
           console.log('Colunas OpenAI não existem, tentando carregar sem elas')
           
           const { data: basicData, error: basicError } = await supabase
@@ -131,7 +196,7 @@ export default function ConfiguracoesPage() {
         }
         
         setDbError(true)
-        setMessage({ type: 'error', text: 'Erro no banco de dados. Execute o SQL de correção primeiro.' })
+        setMessage({ type: 'error', text: 'Erro no banco de dados: ' + error.message })
         return
       }
 
@@ -144,59 +209,8 @@ export default function ConfiguracoesPage() {
       setMessage(null)
     } catch (error) {
       console.error('Erro ao carregar configuração:', error)
-      
-      // Se o erro for "no rows returned", criar configuração padrão
-      if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && error.message.includes('No rows returned')) {
-        console.log('Nenhuma configuração encontrada, criando configuração padrão')
-        
-        if (!empresaSelecionada?.id) {
-          setDbError(true)
-          setMessage({ type: 'error', text: 'Empresa não selecionada' })
-          return
-        }
-        
-        try {
-          const { data: newConfig, error: createError } = await supabase
-            .from('configuracoes_empresa')
-            .insert({
-              empresa_id: empresaSelecionada.id,
-              feature_chat_ia: true,
-              feature_roleplay: true,
-              feature_pdi: true,
-              feature_dashboard: true,
-              feature_base_conhecimento: true,
-              feature_mentor_voz: true,
-              openai_api_key: null,
-              openai_agent_id: null,
-              openai_agent_instructions: null,
-              openai_model: 'gpt-4-turbo-preview',
-              elevenlabs_api_key: null
-            })
-            .select()
-            .single()
-
-          if (createError) {
-            console.error('Erro ao criar configuração:', createError)
-            setDbError(true)
-            setMessage({ type: 'error', text: 'Erro ao criar configuração padrão' })
-            return
-          }
-
-          setConfiguracao(newConfig)
-          setOpenaiApiKey('')
-          setElevenlabsApiKey('')
-          setOpenaiAgentId('')
-          setDbError(false)
-          setMessage({ type: 'success', text: 'Configuração padrão criada com sucesso!' })
-        } catch (createError) {
-          console.error('Erro ao criar configuração:', createError)
-          setDbError(true)
-          setMessage({ type: 'error', text: 'Erro ao criar configuração padrão' })
-        }
-      } else {
-        setDbError(true)
-        setMessage({ type: 'error', text: 'Erro ao carregar configurações. Execute o SQL de correção primeiro.' })
-      }
+      setDbError(true)
+      setMessage({ type: 'error', text: 'Erro inesperado ao carregar configurações' })
     } finally {
       setLoading(false)
     }
