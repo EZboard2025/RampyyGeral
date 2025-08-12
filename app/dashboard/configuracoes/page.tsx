@@ -94,20 +94,24 @@ export default function ConfiguracoesPage() {
 
       console.log('Carregando configuração para empresa:', empresaSelecionada.id)
 
-      // Primeiro, vamos verificar se a tabela existe fazendo uma consulta simples
+      // Primeiro, vamos testar uma consulta simples
+      console.log('Testando consulta básica...')
       const { data: testData, error: testError } = await supabase
         .from('configuracoes_empresa')
-        .select('id')
+        .select('id, empresa_id')
+        .eq('empresa_id', empresaSelecionada.id)
         .limit(1)
 
       if (testError) {
-        console.error('Erro ao verificar tabela:', testError)
+        console.error('Erro na consulta básica:', testError)
         setDbError(true)
-        setMessage({ type: 'error', text: 'Tabela de configurações não existe. Execute o SQL de correção primeiro.' })
+        setMessage({ type: 'error', text: 'Erro na consulta básica: ' + testError.message })
         return
       }
 
-      // Agora tentar carregar a configuração específica
+      console.log('Consulta básica OK, testando consulta completa...')
+
+      // Agora tentar carregar tudo
       const { data, error } = await supabase
         .from('configuracoes_empresa')
         .select('*')
@@ -169,38 +173,22 @@ export default function ConfiguracoesPage() {
           }
         }
         
-        // Se o erro for relacionado a colunas não existentes, tentar carregar sem as colunas OpenAI
+        // Se o erro for relacionado a colunas não existentes, mostrar erro específico
         if (error.message && (error.message.includes('column') || error.message.includes('does not exist'))) {
-          console.log('Colunas OpenAI não existem, tentando carregar sem elas')
-          
-          const { data: basicData, error: basicError } = await supabase
-            .from('configuracoes_empresa')
-            .select('id, empresa_id, feature_chat_ia, feature_roleplay, feature_pdi, feature_dashboard, feature_base_conhecimento, feature_mentor_voz, elevenlabs_api_key, created_at, updated_at')
-            .eq('empresa_id', empresaSelecionada.id)
-            .single()
-
-          if (basicError) {
-            console.error('Erro ao carregar configuração básica:', basicError)
-            setDbError(true)
-            setMessage({ type: 'error', text: 'Erro no banco de dados. Execute o SQL de correção primeiro.' })
-            return
-          }
-
-          setConfiguracao(basicData)
-          setOpenaiApiKey('')
-          setElevenlabsApiKey(basicData.elevenlabs_api_key || '')
-          setOpenaiAgentId('')
+          console.log('Colunas OpenAI não existem')
           setDbError(true)
           setMessage({ type: 'error', text: 'Colunas OpenAI não existem. Execute o SQL de correção.' })
           return
         }
         
+        // Outros erros
         setDbError(true)
         setMessage({ type: 'error', text: 'Erro no banco de dados: ' + error.message })
         return
       }
 
-      // Se chegou até aqui, as colunas existem
+      // Se chegou até aqui, deu certo!
+      console.log('Configuração carregada com sucesso:', data)
       setConfiguracao(data)
       setOpenaiApiKey(data.openai_api_key || '')
       setElevenlabsApiKey(data.elevenlabs_api_key || '')
