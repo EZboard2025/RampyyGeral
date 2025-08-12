@@ -50,14 +50,26 @@ export default function ConfiguracoesPage() {
   const router = useRouter()
   const { empresaSelecionada, usuarioLogado } = useAppStore()
 
+  // Debug logs
+  console.log('ConfiguracoesPage render - usuarioLogado:', usuarioLogado)
+  console.log('ConfiguracoesPage render - empresaSelecionada:', empresaSelecionada)
+  console.log('ConfiguracoesPage render - isGestor:', isGestor(usuarioLogado))
+
   useEffect(() => {
+    console.log('ConfiguracoesPage useEffect - usuarioLogado:', usuarioLogado)
+    console.log('ConfiguracoesPage useEffect - empresaSelecionada:', empresaSelecionada)
+    
     if (!isGestor(usuarioLogado)) {
+      console.log('ConfiguracoesPage - Usuário não é gestor, redirecionando...')
       router.push('/dashboard')
       return
     }
     
     if (empresaSelecionada?.id) {
+      console.log('ConfiguracoesPage - Carregando configuração...')
       carregarConfiguracao()
+    } else {
+      console.log('ConfiguracoesPage - Empresa não selecionada')
     }
   }, [usuarioLogado, empresaSelecionada])
 
@@ -82,7 +94,7 @@ export default function ConfiguracoesPage() {
         console.error('Erro ao carregar configuração:', error)
         
               // Se o erro for relacionado a colunas não existentes, tentar carregar sem as colunas OpenAI
-      if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && (error.message.includes('column') || error.message.includes('does not exist'))) {
+        if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && (error.message.includes('column') || error.message.includes('does not exist'))) {
           console.log('Colunas OpenAI não existem, tentando carregar sem elas')
           
           const { data: basicData, error: basicError } = await supabase
@@ -282,6 +294,18 @@ export default function ConfiguracoesPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Se não há usuário logado ou empresa selecionada, mostrar loading
+  if (!usuarioLogado || !empresaSelecionada) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500" />
+          <p className="mt-4 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
