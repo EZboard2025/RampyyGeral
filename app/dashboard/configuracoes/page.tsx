@@ -59,18 +59,29 @@ export default function ConfiguracoesPage() {
     console.log('ConfiguracoesPage useEffect - usuarioLogado:', usuarioLogado)
     console.log('ConfiguracoesPage useEffect - empresaSelecionada:', empresaSelecionada)
     
+    // Se não há usuário logado, mostrar mensagem
+    if (!usuarioLogado) {
+      console.log('ConfiguracoesPage - Usuário não logado')
+      setLoading(false)
+      return
+    }
+    
+    // Se não é gestor, redirecionar
     if (!isGestor(usuarioLogado)) {
       console.log('ConfiguracoesPage - Usuário não é gestor, redirecionando...')
       router.push('/dashboard')
       return
     }
     
-    if (empresaSelecionada?.id) {
-      console.log('ConfiguracoesPage - Carregando configuração...')
-      carregarConfiguracao()
-    } else {
+    // Se não há empresa selecionada, mostrar mensagem
+    if (!empresaSelecionada?.id) {
       console.log('ConfiguracoesPage - Empresa não selecionada')
+      setLoading(false)
+      return
     }
+    
+    console.log('ConfiguracoesPage - Carregando configuração...')
+    carregarConfiguracao()
   }, [usuarioLogado, empresaSelecionada])
 
   const carregarConfiguracao = async () => {
@@ -296,13 +307,70 @@ export default function ConfiguracoesPage() {
     }
   }
 
-  // Se não há usuário logado ou empresa selecionada, mostrar loading
-  if (!usuarioLogado || !empresaSelecionada) {
+  // Se não há usuário logado, mostrar mensagem
+  if (!usuarioLogado) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500" />
-          <p className="mt-4 text-gray-600">Carregando...</p>
+          <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Usuário Não Logado
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Você precisa estar logado para acessar as configurações.
+          </p>
+          <button
+            onClick={() => router.push('/login')}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Ir para Login
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não é gestor, mostrar mensagem
+  if (!isGestor(usuarioLogado)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Acesso Restrito
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Esta área é exclusiva para gestores.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+          >
+            Voltar ao Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não há empresa selecionada, mostrar mensagem
+  if (!empresaSelecionada) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Empresa Não Selecionada
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Você precisa selecionar uma empresa para acessar as configurações.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Selecionar Empresa
+          </button>
         </div>
       </div>
     )
