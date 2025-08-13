@@ -314,7 +314,7 @@ export default function ConfiguracoesPage() {
     setMessage(null)
 
     try {
-      const response = await fetch(`/api/chat?empresaId=${empresaSelecionada?.id}`, {
+      const response = await fetch(`/api/chat?empresaId=${empresaSelecionada?.id}&apiKey=${encodeURIComponent(openaiApiKey)}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -356,7 +356,9 @@ export default function ConfiguracoesPage() {
         },
         body: JSON.stringify({
           message: 'Olá! Este é um teste do agente.',
-          empresaId: empresaSelecionada?.id
+          empresaId: empresaSelecionada?.id,
+          apiKey: openaiApiKey,
+          agentId: openaiAgentId
         })
       })
 
